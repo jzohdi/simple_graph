@@ -1,0 +1,56 @@
+#map-canvas {
+  background-color: 'black';
+  width: 50%;
+  height: 50%;
+  transform: translate(50%, 0);
+}
+#funct {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  width: 300px;
+}
+#buttn{
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  width: 300px;
+}
+.padding {
+  padding-bottom: 20px;
+}
+
+.button {
+    border: none;
+    color: white;
+    /* padding: 16px 32px; */
+    padding-top: 6px;
+    text-align: center;
+    text-decoration: none;
+    /* display: inline-block; */
+    font-size: 16px;
+    margin: 4px 2px;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+.button2 {
+    background-color: white;
+    color: black;
+    border: 2px solid #008CBA;
+}
+
+.button2:hover {
+    background-color: #008CBA;
+    color: white;
+}
+.button3 {
+    background-color: white;
+    color: black;
+    border: 2px solid #c40000;
+}
+
+.button3:hover {
+    background-color: #c40000;
+    color: white;
+}
