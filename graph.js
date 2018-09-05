@@ -140,9 +140,9 @@ var canvasoffset = $('#map-canvas').offset().left
 if (device == "mobile"){
   // document.getElementById("deviceID").
   canvas.addEventListener("touchmove", calculate, false);
-} else {)
+} else {
 canvas.addEventListener('mousemove', calculate, false);
-
+}
 function calculate(event){
   var numExpressions = window.functionArray.length;
   // console.log(event.clientX - window.canvasoffset)
