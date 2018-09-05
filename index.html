@@ -9,13 +9,18 @@
     <script src="https://unpkg.com/mathjs@5.1.1/dist/math.min.js"></script>
     <script src="https://code.jquery.com/jquery.js"></script>
     <title>Graphing</title>
+    <style id='styles' style='display: none'></style>
   </head>
   <body>
     <div class = 'container-fluid'>
       <input type="text" class='padding' id="funct" name="funct" placeholder="ex. (x^2 - 1)/x">
       <button id='buttn' onclick="getFunction()"class="button button2">Go</button>
       <button id='buttn' onclick="clearGraph()"class="button button3">Clear</button>
+      <p id='details'></p>
     </div>
+    <!-- <div class='container'>
+    <div id = 'details'></div></div> -->
+    <!-- onmousemove="calculate()" -->
     <canvas id='map-canvas'></canvas>
   </body>
   <footer>
