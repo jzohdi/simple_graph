@@ -25,6 +25,15 @@ var canWidth = canvas.width;
 
 var pOff = (canWidth/2);
 
+var device;
+
+if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+    device = "mobile";
+}
+else{
+  device = "desk"
+}
+
 // use for calculating the the values of the epxressions, from -xScale to +xScales
 var xScale = (canWidth/2);
 var xMax = 10;
@@ -54,14 +63,14 @@ function mapVals(num, in_min, in_max, out_min, out_max) {
 //     });
 // }
 
-function isArrayItemExists(array , item) {
-    for ( var i = 0; i < array.length; i++ ) {
-        if(JSON.stringify(array[i]) == JSON.stringify(item)){
-            return true;
-        }
-            }
-            return false;
-}
+// function isArrayItemExists(array , item) {
+//     for ( var i = 0; i < array.length; i++ ) {
+//         if(JSON.stringify(array[i]) == JSON.stringify(item)){
+//             return true;
+//         }
+//             }
+//             return false;
+// }
 
 // each graph input saved as an object, so then can call methods on the separate graphs.
 function FunctionObject(title, points, express){
@@ -128,16 +137,24 @@ var functionArray = new Array;
 var canvasoffset = $('#map-canvas').offset().left
 
 // event listner to look at where on each graph the mouse X is
+if (device == "mobile"){
+  // document.getElementById("deviceID").
+  canvas.addEventListener("touchmove", calculate, false);
+} else {)
 canvas.addEventListener('mousemove', calculate, false);
 
 function calculate(event){
   var numExpressions = window.functionArray.length;
   // console.log(event.clientX - window.canvasoffset)
   if (numExpressions > 0){
-    var x = (event.clientX - window.canvasoffset)
+    if (device == 'mobile'){
+      var x  = event.touches[0].clientX;
+    } else {
+      var x = (event.clientX - window.canvasoffset)
+    }
     // console.log(x, canvas.width)
     // console.log(x, xScale)
-    var xScaled = mapVals(x, 0, canWidth, -10, 10)
+    var xScaled = mapVals(x, 0, canWidth, -xMax, xMax)
     var xFix = xScaled.toFixed(2)
     for (var n = 0; n < numExpressions; n++){
 
