@@ -82,6 +82,9 @@ function FunctionObject(title, points, express){
                     'y': 0};
   this.mouse = [];
   this.intersections = [];
+  this.canvasIntersects = []
+  this.tangent = '';
+  this.slope = math.derivative(title, 'x');
   //
   // if (window.functionArray.length > 0) {
   //   for ( var t = 0; t < window.functionArray.length; t++){
@@ -121,13 +124,35 @@ function FunctionObject(title, points, express){
       ctx.arc(this.mouse[0], this.mouse[1], 5, 0, 2 * Math.PI);
       ctx.stroke();
 
+      // for (var m = 0; m < this.canvasIntersects.length; m++){
+      //   ctx.beginPath();
+      //   ctx.strokeStyle = 'red';
+      //   ctx.arc(this.canvasIntersects[m][0], this.canvasIntersects[m][1], 5, 0, 2*Math.PI);
+      //   ctx.stroke();
+      // }
+      var a = this.cursor.x;
+      var m = this.slope.eval({ 'x' : a });
+      var expr = math.simplify(this.express.eval({ 'x' : a }).toString() + '+' + m.toString() +'(x - ' + a.toString() + ')');
+
+      var tanline = [];
+
+      for (var x = -xMax; x <= xMax; x = x + 1){
+        for (var y = x; y <= x + 0.1; y = y + 0.01){
+          var scaleX = mapVals(y, -xMax, xMax, 0, canWidth);
+          var yval = expr.eval({ 'x' : y });
+          var scaleY = mapVals(yval, -xMax, xMax, canvas.height, 0);
+          ctx.fillRect(scaleX, scaleY, 1, 1);
+        }
+      }
+
       var text = '  <b>' + this.title + '</b> --> x: ' + this.cursor['x'].toString() + ' y: ' + parseFloat(this.cursor['y']).toFixed(4) + ';'
       // if (this.intersections.length > 0){
       //   text += '<b> Intersections:</b> '
       //   for (var x = 0; x < this.intersections.length; x++){
-      //     text += 'x: ' + this.intersections[x][0] + ' y: ' + this.intersections[x][1];
+      //     text += 'x: ' + this.intersections[x][0] + ' y: ' + this.intersections[x][1] + ' /';
       //   }
       // }
+      text += '<b> Tangent Line: </b>' + expr.toString();
       document.getElementById(num.toString()).innerHTML = text;
   }
 }
@@ -152,9 +177,11 @@ function calculate(event){
     } else {
       var x = (event.clientX - window.canvasoffset)
     }
-    // console.log(x, canvas.width)
-    // console.log(x, xScale)
-    var xScaled = mapVals(x, 0, canWidth, -xMax, xMax)
+    // console.log(x, canvas.width);
+    // console.log(x, xScale);
+    var xScaled = mapVals(x, 0, canWidth, -xMax, xMax);
+
+    //
     var xFix = xScaled.toFixed(2)
     for (var n = 0; n < numExpressions; n++){
 
@@ -200,11 +227,39 @@ function getFunction() {
 
     var newExpressionObject = new FunctionObject(expression, coords, code);
 
+    // var Fraction = algebra.Fraction;
+    // var Expression = algebra.Expression;
+    // var Equation = algebra.Equation;
+
+    // iterate over past expressions and evaluate any intersects
+    // if (window.functionArray.length >= 1){
+    //       var exp1 = new Expression(expression)
+    //       exp1 = exp1.simplify();
+    //       exp1 = algebra.parse(expression);
+    //       console.log(exp1.toString())
+    //       for (var n = 0; n < window.functionArray.length; n++){
+    //         var exp2 = new Expression(window.functionArray[n].title)
+    //         exp2 = exp2.simplify();
+    //         exp2 = algebra.parse(window.functionArray[n].title);
+    //         console.log(exp2.toString)
+    //         var eq = new Equation(exp1, exp2);
+    //         var solutions = eq.solveFor('x');
+    //
+    //         for (var m = 0; m < solutions.length; m++){
+    //           var xCoord = solutions[m]['numer'];
+    //           var yCoord = code.eval({ 'x' : xCoord});
+    //           newExpressionObject.intersections.push([xCoord, yCoord]);
+    //
+    //           var forCanvasX = mapVals(xCoord, -xMax, xMax, 0, canWidth);
+    //           var forCanvasY = mapVals(yCoord, -xMax, xMax, canvas.height, 0);
+    //
+    //           newExpressionObject.canvasIntersects.push([forCanvasX, forCanvasY]);
+    //         }
+    //       }
+    // }
+
     window.functionArray.push(newExpressionObject);
 
-    if (window.functionArray.length >= 2){
-
-    }
     var len = window.functionArray.length;
     // '<div id="' + len.toString() + '"></div>'
     var newDiv = document.createElement('p')
