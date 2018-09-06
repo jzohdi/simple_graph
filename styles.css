@@ -1,5 +1,7 @@
 body {
   height: 100vh;
+  margin-left: 0px;
+  marin-right: 0px;
 }
 /* #map-canvas {
   background-color: 'black';
