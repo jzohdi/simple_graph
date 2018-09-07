@@ -257,26 +257,31 @@ function calculate(event){
 }
 // math js cannot handle ln(x) so  remove and replace, while keeping object between ( )
 function scrubln(ex){
-  var start = false;
-  var middle = [];
-  var exBefore;
-  var exAfter;
-  for (var i = 0; i < ex.length; i++){
-    if (ex.charAt(i) == 'l' && ex.charAt(i+1) == 'n'){
-      exBefore = ex.slice(0, i);
-      middle.push(i + 3);
-      start = true;
-    }
-    if (start == true){
-      if (ex.charAt(i) == ')'){
-        exAfter = ex.slice(i, ex.length);
-        start = false;
-        middle.push(i)
+  if ( ex.includes('ln(') ){
+    var start = false;
+    var middle = [];
+    var exBefore;
+    var exAfter;
+    for (var i = 0; i < ex.length; i++){
+      if (ex.charAt(i) == 'l' && ex.charAt(i+1) == 'n'){
+        exBefore = ex.slice(0, i);
+        middle.push(i + 3);
+        start = true;
       }
-    }
+      if (start == true){
+        if (ex.charAt(i) == ')'){
+          exAfter = ex.slice(i, ex.length);
+          start = false;
+          middle.push(i)
+        }
+      }
 
-  }
+    }
   return exBefore + 'log(' + ex.slice(middle[0], middle[1]) + ', 2.71828182846'+ exAfter;
+} else {
+  return ex;
+}
+
 }
 
 // calculate [x, y] values that represent epxression given, save expression, and values as an object, append to array
