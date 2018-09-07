@@ -21,6 +21,7 @@ canvas.width = boxSide;
 canvas.height = boxSide;
 
 document.getElementById('styles').append('#details { width: ' + (boxSide - 6).toString() + 'px; display: block; }')
+document.getElementById('styles').append('.flex { margin-left: ' + offset.toString() + 'px; width: ' + boxSide.toString() + 'px;}')
 var canWidth = canvas.width;
 
 var pOff = (canWidth/2);

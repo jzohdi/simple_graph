@@ -84,7 +84,6 @@ body {
     display: -ms-flexbox;
     display: -webkit-flex;
     display: flex;
-
 }
 
 .flex-child {
