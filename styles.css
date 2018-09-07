@@ -37,7 +37,7 @@ body {
     border: none;
     color: white;
     /* padding: 16px 32px; */
-    padding-top: 6px;
+    padding-top: 5px;
     text-align: center;
     text-decoration: none;
     /* display: inline-block; */
@@ -66,6 +66,37 @@ body {
 .button3:hover {
     background-color: #c40000;
     color: white;
+}
+.button4 {
+    background-color: white;
+    color: black;
+    border: 2px solid #027027;
+}
+
+.button4:hover {
+    background-color: #027027;
+    color: white;
+}
+
+.flex {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+
+}
+
+.flex-child {
+    text-align: center;
+    margin: 4px 2px;
+    -webkit-box-flex: 1 1 auto;
+    -moz-box-flex:  1 1 auto;
+    -webkit-flex:  1 1 auto;
+    -ms-flex:  1 1 auto;
+    flex:  1 1 auto;
+    margin-right:5px;
+    /* width: 100px; */
 }
 p{
   margin:0;

@@ -130,29 +130,36 @@ function FunctionObject(title, points, express){
       //   ctx.arc(this.canvasIntersects[m][0], this.canvasIntersects[m][1], 5, 0, 2*Math.PI);
       //   ctx.stroke();
       // }
-      var a = this.cursor.x;
-      var m = this.slope.eval({ 'x' : a });
-      var expr = math.simplify(this.express.eval({ 'x' : a }).toString() + '+' + m.toString() +'(x - ' + a.toString() + ')');
-
-      var tanline = [];
-
-      for (var x = -xMax; x <= xMax; x = x + 1){
-        for (var y = x; y <= x + 0.1; y = y + 0.01){
-          var scaleX = mapVals(y, -xMax, xMax, 0, canWidth);
-          var yval = expr.eval({ 'x' : y });
-          var scaleY = mapVals(yval, -xMax, xMax, canvas.height, 0);
-          ctx.fillRect(scaleX, scaleY, 1, 1);
-        }
-      }
-
       var text = '  <b>' + this.title + '</b> --> x: ' + this.cursor['x'].toString() + ' y: ' + parseFloat(this.cursor['y']).toFixed(4) + ';'
+
+      var a = this.cursor.x;
+
+      try {
+        var m = this.slope.eval({ 'x' : a });
+        var expr = math.simplify(this.express.eval({ 'x' : a }).toString() + '+' + m.toString() +'(x - ' + a.toString() + ')');
+
+        var tanline = [];
+
+        for (var x = -xMax; x <= xMax; x = x + 1){
+          for (var y = x; y <= x + 0.1; y = y + 0.01){
+            var scaleX = mapVals(y, -xMax, xMax, 0, canWidth);
+            var yval = expr.eval({ 'x' : y });
+            var scaleY = mapVals(yval, -xMax, xMax, canvas.height, 0);
+            ctx.fillRect(scaleX, scaleY, 1, 1);
+          }
+        }
+        text += '<b> Tangent Line: </b>' + expr.toString();
+      } catch (err) {
+          text += '<b> Tangent Line: </b>x coordinate out of domain.'
+      }
       // if (this.intersections.length > 0){
       //   text += '<b> Intersections:</b> '
       //   for (var x = 0; x < this.intersections.length; x++){
       //     text += 'x: ' + this.intersections[x][0] + ' y: ' + this.intersections[x][1] + ' /';
       //   }
       // }
-      text += '<b> Tangent Line: </b>' + expr.toString();
+      // text += '<b> Tangent Line: </b>' + expr.toString();
+
       document.getElementById(num.toString()).innerHTML = text;
   }
 }
@@ -168,9 +175,57 @@ if (device == "mobile"){
 } else {
 canvas.addEventListener('mousemove', calculate, false);
 }
+
+// calculate tanget line for the user input X
+document.getElementById('find-Tan').addEventListener('click', calculateTan);
+
+function calculateTan(){
+
+  var input = document.getElementById('inputX').value;
+
+  var inX = parseFloat(input);
+
+  if (inX != NaN){
+    var xOnCanvas = mapVals(inX, -xMax, xMax, 0, canWidth);
+    for (var i = 0; i < window.functionArray.length; i++){
+
+        var express = window.functionArray[i].express;
+        var yFromFunc = express.eval({ 'x' : inX });
+        var yOnCanvas = mapVals(yFromFunc, -xMax, xMax, canvas.height, 0);
+
+        window.functionArray[i].cursor['x'] = inX;
+        window.functionArray[i].cursor['y'] = yFromFunc;
+        window.functionArray[i].mouse = [xOnCanvas, yOnCanvas];
+      // try {
+
+        // var m = window.functionArray[i].slope.eval({ 'x' : inX });
+        // var expr = math.simplify(window.functionArray[i].express.eval({ 'x' : inX }).toString() + '+' + m.toString() + '(x - ' + inX.toString() + ')');
+        //
+        // for (var x = -xMax; x <= xMax; x = x + 1){
+        //     for (var y = x; y <= x + 0.1; y = y + 0.01){
+        //       var scaleX = mapVals(y, -xMax, xMax, 0, canWidth);
+        //       var yval = expr.eval({ 'x' : y });
+        //       var scaleY = mapVals(yval, -xMax, xMax, canvas.height, 0);
+        //       ctx.fillRect(scaleX, scaleY, 1, 1);
+        //     }
+        //   }
+        // var text = '<b> Tangent Line: </b>' + expr.toString();
+        // var id = (i + 1).toString();
+        // document.getElementById(id).innerHTML = text;
+        // } catch (err){
+        //     console.log('Out of Domain')
+        // }
+    }
+    updateGraph();
+  }
+
+
+}
+
 function calculate(event){
   var numExpressions = window.functionArray.length;
   // console.log(event.clientX - window.canvasoffset)
+
   if (numExpressions > 0){
     if (device == 'mobile'){
       var x  = event.touches[0].clientX;
@@ -201,11 +256,13 @@ function calculate(event){
 function getFunction() {
   var expression = document.getElementById("funct").value.replace('X', 'x').replace('ln(x)', '2.303log(x)');
   var alreadyExpressed = false;
+
   for (var t = 0; t < window.functionArray.length; t++){
     if (window.functionArray[t].title == expression){
       alreadyExpressed = true;
     }
   }
+
   if (alreadyExpressed == false){
     var node = math.parse(expression);
     var code = node.compile();
@@ -262,9 +319,9 @@ function getFunction() {
 
     var len = window.functionArray.length;
     // '<div id="' + len.toString() + '"></div>'
-    var newDiv = document.createElement('p')
-    newDiv.setAttribute('id', len.toString())
-    document.getElementById('details').appendChild(newDiv)
+    var newDiv = document.createElement('p');
+    newDiv.setAttribute('id', len.toString());
+    document.getElementById('details').appendChild(newDiv);
 
     for (var j = 0 ; j < coords.length; j++){
 
@@ -273,6 +330,11 @@ function getFunction() {
       var py = coords[j][1]
 
       ctx.fillRect(px, py, 1, 1);
+    }
+    if (device == 'mobile'){
+      var detailsP = document.getElementById('details')
+
+      details.setAttribute('style', 'height:' + (len*17*3).toString() + 'px;')
     }
   }
 }
