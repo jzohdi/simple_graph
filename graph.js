@@ -138,17 +138,20 @@ function FunctionObject(title, points, express){
         var m = this.slope.eval({ 'x' : a });
         var expr = math.simplify(this.express.eval({ 'x' : a }).toString() + '+' + m.toString() +'(x - ' + a.toString() + ')');
 
-        var tanline = [];
-
-        for (var x = -xMax; x <= xMax; x = x + 1){
-          for (var y = x; y <= x + 0.1; y = y + 0.01){
-            var scaleX = mapVals(y, -xMax, xMax, 0, canWidth);
-            var yval = expr.eval({ 'x' : y });
-            var scaleY = mapVals(yval, -xMax, xMax, canvas.height, 0);
-            ctx.fillRect(scaleX, scaleY, 1, 1);
-          }
-        }
-        text += '<b> Tangent Line: </b>' + expr.toString();
+        // var tanline = [];
+        if (expr.toString().includes('i')){
+            text += '<b> Tangent Line: </b>x coordinate out of domain.'
+        } else {
+            for (var x = -xMax; x <= xMax; x = x + 1){
+              for (var y = x; y <= x + 0.1; y = y + 0.01){
+                var scaleX = mapVals(y, -xMax, xMax, 0, canWidth);
+                var yval = expr.eval({ 'x' : y });
+                var scaleY = mapVals(yval, -xMax, xMax, canvas.height, 0);
+                ctx.fillRect(scaleX, scaleY, 1, 1);
+              }
+            }
+            text += '<b> Tangent Line: </b>' + expr.toString();
+         }
       } catch (err) {
           text += '<b> Tangent Line: </b>x coordinate out of domain.'
       }
@@ -252,9 +255,36 @@ function calculate(event){
     updateGraph();
   }
 }
+// math js cannot handle ln(x) so  remove and replace, while keeping object between ( )
+function scrubln(ex){
+  var start = false;
+  var middle = [];
+  var exBefore;
+  var exAfter;
+  for (var i = 0; i < ex.length; i++){
+    if (ex.charAt(i) == 'l' && ex.charAt(i+1) == 'n'){
+      exBefore = ex.slice(0, i);
+      middle.push(i + 3);
+      start = true;
+    }
+    if (start == true){
+      if (ex.charAt(i) == ')'){
+        exAfter = ex.slice(i, ex.length);
+        start = false;
+        middle.push(i)
+      }
+    }
+
+  }
+  return exBefore + 'log(' + ex.slice(middle[0], middle[1]) + ', 2.71828182846'+ exAfter;
+}
+
 // calculate [x, y] values that represent epxression given, save expression, and values as an object, append to array
 function getFunction() {
-  var expression = document.getElementById("funct").value.replace('X', 'x').replace('ln(x)', '2.303log(x)');
+  var expression = document.getElementById("funct").value.replace('X', 'x');
+  // replace('ln(x)', 'log(x, 2.71828182846)')
+  expression = scrubln(expression);
+
   var alreadyExpressed = false;
 
   for (var t = 0; t < window.functionArray.length; t++){
