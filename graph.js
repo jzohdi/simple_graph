@@ -21,9 +21,11 @@ canvas.width = boxSide;
 canvas.height = boxSide;
 
 document.getElementById('styles').append('#details { width: ' + (boxSide - 6).toString() + 'px; display: block; }')
-document.getElementById('styles').append('.flex { margin-left: ' + offset.toString() + 'px; width: ' + boxSide.toString() + 'px;}')
-var canWidth = canvas.width;
+document.getElementById('styles').append('.flex { margin-left: ' + offset.toString() + 'px; width: ' + boxSide.toString() + 'px;}');
 
+var canWidth = canvas.width;
+var canvasoffsetTop = $('#map-canvas').offset().top;
+document.getElementById('styles').append('#zoom {transform: translate(' + (canWidth + offset - 30).toString() + 'px, ' + 0 + 'px);}')
 var pOff = (canWidth/2);
 
 var device;
@@ -143,7 +145,7 @@ function FunctionObject(title, points, express){
         if (expr.toString().includes('i')){
             text += '<b> Tangent Line: </b>x coordinate out of domain.'
         } else {
-            for (var x = -xMax; x <= xMax; x = x + 1){
+            for (var x = -xMax; x <= xMax; x = x + (xMax/10)){
               for (var y = x; y <= x + 0.1; y = y + 0.01){
                 var scaleX = mapVals(y, -xMax, xMax, 0, canWidth);
                 var yval = expr.eval({ 'x' : y });
@@ -200,25 +202,7 @@ function calculateTan(){
         window.functionArray[i].cursor['x'] = inX;
         window.functionArray[i].cursor['y'] = yFromFunc;
         window.functionArray[i].mouse = [xOnCanvas, yOnCanvas];
-      // try {
 
-        // var m = window.functionArray[i].slope.eval({ 'x' : inX });
-        // var expr = math.simplify(window.functionArray[i].express.eval({ 'x' : inX }).toString() + '+' + m.toString() + '(x - ' + inX.toString() + ')');
-        //
-        // for (var x = -xMax; x <= xMax; x = x + 1){
-        //     for (var y = x; y <= x + 0.1; y = y + 0.01){
-        //       var scaleX = mapVals(y, -xMax, xMax, 0, canWidth);
-        //       var yval = expr.eval({ 'x' : y });
-        //       var scaleY = mapVals(yval, -xMax, xMax, canvas.height, 0);
-        //       ctx.fillRect(scaleX, scaleY, 1, 1);
-        //     }
-        //   }
-        // var text = '<b> Tangent Line: </b>' + expr.toString();
-        // var id = (i + 1).toString();
-        // document.getElementById(id).innerHTML = text;
-        // } catch (err){
-        //     console.log('Out of Domain')
-        // }
     }
     updateGraph();
   }
@@ -226,7 +210,9 @@ function calculateTan(){
 
 }
 
+// set the mouse coordinates and where the function object will draw its tangent and cursor circle
 function calculate(event){
+
   var numExpressions = window.functionArray.length;
   // console.log(event.clientX - window.canvasoffset)
 
@@ -256,8 +242,10 @@ function calculate(event){
     updateGraph();
   }
 }
+
 // math js cannot handle ln(x) so  remove and replace, while keeping object between ( )
 function scrubln(ex){
+
   if ( ex.includes('ln(') ){
     var start = false;
     var middle = [];
@@ -278,16 +266,17 @@ function scrubln(ex){
       }
 
     }
-  return exBefore + 'log(' + ex.slice(middle[0], middle[1]) + ', 2.71828182846'+ exAfter;
-} else {
-  return ex;
-}
+    return exBefore + 'log(' + ex.slice(middle[0], middle[1]) + ', 2.71828182846'+ exAfter;
+  } else {
+    return ex;
+  }
 
 }
 
 // calculate [x, y] values that represent epxression given, save expression, and values as an object, append to array
 function getFunction() {
-  var expression = document.getElementById("funct").value.replace('X', 'x');
+
+  var expression = document.getElementById("funct").value.toLowerCase();
   // replace('ln(x)', 'log(x, 2.71828182846)')
   expression = scrubln(expression);
 
@@ -320,37 +309,6 @@ function getFunction() {
 
     var newExpressionObject = new FunctionObject(expression, coords, code);
 
-    // var Fraction = algebra.Fraction;
-    // var Expression = algebra.Expression;
-    // var Equation = algebra.Equation;
-
-    // iterate over past expressions and evaluate any intersects
-    // if (window.functionArray.length >= 1){
-    //       var exp1 = new Expression(expression)
-    //       exp1 = exp1.simplify();
-    //       exp1 = algebra.parse(expression);
-    //       console.log(exp1.toString())
-    //       for (var n = 0; n < window.functionArray.length; n++){
-    //         var exp2 = new Expression(window.functionArray[n].title)
-    //         exp2 = exp2.simplify();
-    //         exp2 = algebra.parse(window.functionArray[n].title);
-    //         console.log(exp2.toString)
-    //         var eq = new Equation(exp1, exp2);
-    //         var solutions = eq.solveFor('x');
-    //
-    //         for (var m = 0; m < solutions.length; m++){
-    //           var xCoord = solutions[m]['numer'];
-    //           var yCoord = code.eval({ 'x' : xCoord});
-    //           newExpressionObject.intersections.push([xCoord, yCoord]);
-    //
-    //           var forCanvasX = mapVals(xCoord, -xMax, xMax, 0, canWidth);
-    //           var forCanvasY = mapVals(yCoord, -xMax, xMax, canvas.height, 0);
-    //
-    //           newExpressionObject.canvasIntersects.push([forCanvasX, forCanvasY]);
-    //         }
-    //       }
-    // }
-
     window.functionArray.push(newExpressionObject);
 
     var len = window.functionArray.length;
@@ -376,7 +334,39 @@ function getFunction() {
 }
 
 // initiate the axis markers
+
+function setNewCoords(num){
+  var newMax = xMax + num;
+  for (var j = 0; j < window.functionArray.length; j++){
+    var newCoords = [];
+    var funct = window.functionArray[j];
+    for (var x = -newMax; x <= newMax; x = x + 0.01){
+
+      // var x = j
+
+      var result = funct.express.eval({'x' : x});
+
+      // map the x and y of the function to the dimensions of the canvas
+      var canvasX = mapVals(x, -newMax, newMax, 0, canWidth);
+      var canvasY = mapVals(result, -newMax, newMax, canvas.height, 0);
+      // console.log(canvasX, canvasY)
+      newCoords.push([parseFloat(canvasX).toFixed(4), parseFloat(canvasY).toFixed(4)]);
+    }
+    funct.coordinates = newCoords;
+  }
+  window.xMax += num;
+  document.getElementById('inputX').setAttribute('placeholder', 'input value for x from ' + (-newMax) + ' to ' + newMax);
+  updateGraph();
+}
+document.getElementById('zoom-out').addEventListener("click", function(){
+  setNewCoords(1);
+});
+document.getElementById('zoom-in').addEventListener("click", function(){
+  setNewCoords(-1);
+});
+
 function setAxis(){
+
   var yAxis = [], xAxis = [];
   var ymid = canWidth/2, xmid = canvas.height/2;
   var ymarkers = canvas.height/20, xmarkers = canWidth/20;
@@ -421,4 +411,5 @@ function updateGraph(){
   for (var x = 0; x < window.functionArray.length; x++){
     window.functionArray[x].update((x + 1));
   }
+  // zoomButton.update();
 }

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=yes" />
 
     <link rel = 'stylesheet' href = 'styles.css' type='text/css'>
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
@@ -21,6 +21,7 @@
       <div style = 'text-align: center;' id='input-box' class="flex">
         <input type="text" class="flex-child" id="inputX" placeholder='input value for x from -10 to 10'>
         <input type="button" class="flex-child button button4" id="find-Tan"  value="Input x Value">
+
       </div>
 
       <p id='details'></p>
@@ -28,8 +29,13 @@
     <!-- <div class='container'>
     <div id = 'details'></div></div> -->
     <!-- onmousemove="calculate()" -->
+    <ul id='zoom'>
+      <li><input type="button" id='zoom-in'value="+"></li>
+      <li><input type="button" id='zoom-out'value="-"></li>
+    </ul>
     <canvas id='map-canvas'></canvas>
   </body>
   <footer>
     <script src='graph.js'></script>
+    <!-- <script src='zoom.js'></script> -->
 </html>
