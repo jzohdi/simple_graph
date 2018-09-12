@@ -88,6 +88,7 @@ function FunctionObject(title, string, points, express){
   this.canvasIntersects = []
   this.tangent = '';
   this.slope = math.derivative(string, 'x');
+  // console.log(this.slope.toString());
   //
   // if (window.functionArray.length > 0) {
   //   for ( var t = 0; t < window.functionArray.length; t++){
@@ -165,7 +166,7 @@ function FunctionObject(title, string, points, express){
       //   }
       // }
       // text += '<b> Tangent Line: </b>' + expr.toString();
-
+      text += '<br><b>Derivative: </b> ' + this.slope.toString();
       document.getElementById(num.toString()).innerHTML = text;
   }
 }
@@ -315,6 +316,11 @@ function getFunction() {
     // '<div id="' + len.toString() + '"></div>'
     var newDiv = document.createElement('p');
     newDiv.setAttribute('id', len.toString());
+    if (device == 'mobile'){
+      newDiv.setAttribute('style', 'height:' + (18*3).toString() + 'px;')
+    } else {
+      newDiv.setAttribute('style', 'height:' + (18*3).toString() + 'px;')
+    }
     document.getElementById('details').appendChild(newDiv);
 
     for (var j = 0 ; j < coords.length; j++){
@@ -324,11 +330,6 @@ function getFunction() {
       var py = coords[j][1]
 
       ctx.fillRect(px, py, 1, 1);
-    }
-    if (device == 'mobile'){
-      var detailsP = document.getElementById('details')
-
-      details.setAttribute('style', 'height:' + (len*18*3).toString() + 'px;')
     }
   }
 }
