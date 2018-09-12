@@ -76,7 +76,7 @@ function mapVals(num, in_min, in_max, out_min, out_max) {
 // }
 
 // each graph input saved as an object, so then can call methods on the separate graphs.
-function FunctionObject(title, points, express){
+function FunctionObject(title, string, points, express){
   this.title = title;
   this.coordinates = JSON.parse(JSON.stringify(points));
 
@@ -87,7 +87,7 @@ function FunctionObject(title, points, express){
   this.intersections = [];
   this.canvasIntersects = []
   this.tangent = '';
-  this.slope = math.derivative(title, 'x');
+  this.slope = math.derivative(string, 'x');
   //
   // if (window.functionArray.length > 0) {
   //   for ( var t = 0; t < window.functionArray.length; t++){
@@ -139,7 +139,7 @@ function FunctionObject(title, points, express){
 
       try {
         var m = this.slope.eval({ 'x' : a });
-        var expr = math.simplify(this.express.eval({ 'x' : a }).toString() + '+' + m.toString() +'(x - ' + a.toString() + ')');
+        var expr = math.simplify(this.express.eval({ 'x' : a }).toFixed(5) + '+' + parseFloat(m).toFixed(5) +'(x - ' + parseFloat(a).toFixed(4) + ')');
 
         // var tanline = [];
         if (expr.toString().includes('i')){
@@ -187,7 +187,7 @@ document.getElementById('find-Tan').addEventListener('click', calculateTan);
 
 function calculateTan(){
 
-  var input = document.getElementById('inputX').value;
+  var input = document.getElementById('inputX').value.replace('pi', Math.PI);
 
   var inX = parseFloat(input);
 
@@ -278,8 +278,8 @@ function getFunction() {
 
   var expression = document.getElementById("funct").value.toLowerCase();
   // replace('ln(x)', 'log(x, 2.71828182846)')
-  expression = scrubln(expression);
-
+  var finalexpression = scrubln(expression);
+  // console.log(finalexpression, expression);
   var alreadyExpressed = false;
 
   for (var t = 0; t < window.functionArray.length; t++){
@@ -289,7 +289,7 @@ function getFunction() {
   }
 
   if (alreadyExpressed == false){
-    var node = math.parse(expression);
+    var node = math.parse(finalexpression);
     var code = node.compile();
 
     var coords = [];
@@ -307,7 +307,7 @@ function getFunction() {
       coords.push([parseFloat(canvasX).toFixed(4), parseFloat(canvasY).toFixed(4)]);
     }
 
-    var newExpressionObject = new FunctionObject(expression, coords, code);
+    var newExpressionObject = new FunctionObject(expression, finalexpression, coords, code);
 
     window.functionArray.push(newExpressionObject);
 
@@ -328,7 +328,7 @@ function getFunction() {
     if (device == 'mobile'){
       var detailsP = document.getElementById('details')
 
-      details.setAttribute('style', 'height:' + (len*17*3).toString() + 'px;')
+      details.setAttribute('style', 'height:' + (len*18*3).toString() + 'px;')
     }
   }
 }
@@ -358,6 +358,8 @@ function setNewCoords(num){
   document.getElementById('inputX').setAttribute('placeholder', 'input value for x from ' + (-newMax) + ' to ' + newMax);
   updateGraph();
 }
+
+
 document.getElementById('zoom-out').addEventListener("click", function(){
   setNewCoords(1);
 });
