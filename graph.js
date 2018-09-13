@@ -36,7 +36,9 @@ if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
 else{
   device = "desk"
 }
-
+if (device == 'mobile'){
+  document.getElementById('styles').append('#details { font-sixe: 14px }')
+}
 // use for calculating the the values of the epxressions, from -xScale to +xScales
 var xScale = (canWidth/2);
 var xMax = 10;

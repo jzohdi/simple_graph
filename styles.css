@@ -127,3 +127,14 @@ li{
   margin:0px;
   font-size: 18px;
 }
+@media only screen and (max-width: 600px) {
+    #zoom-out {
+        height: 35px;
+    }
+    #zoom-in {
+      height: 35px;
+    }
+    #zoom {
+      height: 75px;
+    }
+}
