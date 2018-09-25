@@ -57,27 +57,14 @@ function mapVals(num, in_min, in_max, out_min, out_max) {
   return (num - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// console.log(mapVals(-8.01, -10, 10, -433, 433));
-// function intersect(a, b) {
-//     var t;
-//     if (b.length > a.length) t = b, b = a, a = t; // indexOf to loop over shorter
-//     return a.filter(function (e) {
-//         return b.indexOf(e) > -1;
-//     }).filter(function (e, i, c) { // extra step to remove duplicates
-//         return c.indexOf(e) === i;
-//     });
-// }
 
-// function isArrayItemExists(array , item) {
-//     for ( var i = 0; i < array.length; i++ ) {
-//         if(JSON.stringify(array[i]) == JSON.stringify(item)){
-//             return true;
-//         }
-//             }
-//             return false;
-// }
-
+/*
 // each graph input saved as an object, so then can call methods on the separate graphs.
+* the function object calculates its own tangent line, the canvas coordinates
+* are held within coordinates and must be calculated again if the canvas
+* is zoomed in or out.
+*
+*/
 function FunctionObject(title, string, points, express){
   this.title = title;
   this.coordinates = JSON.parse(JSON.stringify(points));
@@ -90,20 +77,6 @@ function FunctionObject(title, string, points, express){
   this.canvasIntersects = []
   this.tangent = '';
   this.slope = math.derivative(string, 'x');
-  // console.log(this.slope.toString());
-  //
-  // if (window.functionArray.length > 0) {
-  //   for ( var t = 0; t < window.functionArray.length; t++){
-  //       var otherExpression = window.functionArray[t].express;
-  //       for (var n = -10; n < 10; n=n + 0.01){
-  //           var thisY = express.eval({ 'x' : parseFloat(n).toFixed(2) })
-  //           var otherY = otherExpression.eval({ 'x' : parseFloat(n).toFixed(2) })
-  //           if(thisY == otherY){
-  //             this.intersections.push([parseFloat(n).toFixed(2), otherY])
-  //           }
-  //       }
-  //   }
-  // }
 
   this.update = function(num){
       var y = 0;
@@ -130,12 +103,6 @@ function FunctionObject(title, string, points, express){
       ctx.arc(this.mouse[0], this.mouse[1], 5, 0, 2 * Math.PI);
       ctx.stroke();
 
-      // for (var m = 0; m < this.canvasIntersects.length; m++){
-      //   ctx.beginPath();
-      //   ctx.strokeStyle = 'red';
-      //   ctx.arc(this.canvasIntersects[m][0], this.canvasIntersects[m][1], 5, 0, 2*Math.PI);
-      //   ctx.stroke();
-      // }
       var text = '  <b>' + this.title + '</b> --> x: ' + this.cursor['x'].toString() + ' y: ' + parseFloat(this.cursor['y']).toFixed(4) + ';'
 
       var a = this.cursor.x;
@@ -161,13 +128,7 @@ function FunctionObject(title, string, points, express){
       } catch (err) {
           text += '<b> Tangent Line: </b>x coordinate out of domain.'
       }
-      // if (this.intersections.length > 0){
-      //   text += '<b> Intersections:</b> '
-      //   for (var x = 0; x < this.intersections.length; x++){
-      //     text += 'x: ' + this.intersections[x][0] + ' y: ' + this.intersections[x][1] + ' /';
-      //   }
-      // }
-      // text += '<b> Tangent Line: </b>' + expr.toString();
+
       text += '<br><b>Derivative: </b> ' + this.slope.toString();
       document.getElementById(num.toString()).innerHTML = text;
   }
@@ -188,10 +149,16 @@ canvas.addEventListener('mousemove', calculate, false);
 // calculate tanget line for the user input X
 document.getElementById('find-Tan').addEventListener('click', calculateTan);
 
+/*
+*
+* calculateTan is called upon input x, the line itself
+* is draw by the function object within its update method
+*
+*/
 function calculateTan(){
 
   var input = document.getElementById('inputX').value.replace('pi', Math.PI);
-
+  addXToURI("!" + input)
   var inX = parseFloat(input);
 
   if (inX != NaN){
@@ -213,7 +180,12 @@ function calculateTan(){
 
 }
 
+//
 // set the mouse coordinates and where the function object will draw its tangent and cursor circle
+//
+//
+//
+//
 function calculate(event){
 
   var numExpressions = window.functionArray.length;
@@ -225,10 +197,11 @@ function calculate(event){
     } else {
       var x = (event.clientX - window.canvasoffset)
     }
+
     // console.log(x, canvas.width);
     // console.log(x, xScale);
     var xScaled = mapVals(x, 0, canWidth, -xMax, xMax);
-
+    addXToURI("!" + xScaled.toFixed(2))
     //
     var xFix = xScaled.toFixed(2)
     for (var n = 0; n < numExpressions; n++){
@@ -246,7 +219,11 @@ function calculate(event){
   }
 }
 
+//
 // math js cannot handle ln(x) so  remove and replace, while keeping object between ( )
+//
+//
+
 function scrubln(ex){
 
   if ( ex.includes('ln(') ){
@@ -276,10 +253,22 @@ function scrubln(ex){
 
 }
 
-// calculate [x, y] values that represent epxression given, save expression, and values as an object, append to array
+/*
+*
+* getFunction is called when the user clicks on the Go button,
+* first changing it to all lower case then removing ln and replacing with
+* log(x) based e since this is the equivalent function,
+* then checking to see if the user has already entered this function previously
+* if not then a new object is created that holds the function and associated
+* methods
+*
+*/
 function getFunction() {
 
   var expression = document.getElementById("funct").value.toLowerCase();
+  if (expression == ''){
+    return console.log("empty function field");
+  }
   // replace('ln(x)', 'log(x, 2.71828182846)')
   var finalexpression = scrubln(expression);
   // console.log(finalexpression, expression);
@@ -292,6 +281,7 @@ function getFunction() {
   }
 
   if (alreadyExpressed == false){
+    AddtoURI('(' + expression + ')')
     var node = math.parse(finalexpression);
     var code = node.compile();
 
@@ -303,10 +293,9 @@ function getFunction() {
 
       var result = code.eval({'x' : x});
 
-      // map the x and y of the function to the dimensions of the canvas
       var canvasX = mapVals(x, -xMax, xMax, 0, canWidth);
       var canvasY = mapVals(result, -xMax, xMax, canvas.height, 0);
-      // console.log(canvasX, canvasY)
+
       coords.push([parseFloat(canvasX).toFixed(4), parseFloat(canvasY).toFixed(4)]);
     }
 
@@ -336,7 +325,14 @@ function getFunction() {
   }
 }
 
-// initiate the axis markers
+/*
+*
+* This function is called when the zoom in or zoom out buttons are clicked
+* the function iterates through each of the saved function's canvas coordinates
+* and recalculates where the points along the graph should be relative to the
+* new frame. the page starts at from -10 to 10
+*
+*/
 
 function setNewCoords(num){
   var newMax = xMax + num;
@@ -370,6 +366,15 @@ document.getElementById('zoom-in').addEventListener("click", function(){
   setNewCoords(-1);
 });
 
+
+/*
+*
+* Below are the are the reused methods to draw the axis,
+* clear functions
+* and while updateGraph is called, update will be called
+* on each function, giving an effect of animation
+*
+*/
 function setAxis(){
 
   var yAxis = [], xAxis = [];
@@ -403,7 +408,11 @@ function clearGraph(){
 
   setAxis();
 
+  document.getElementById('inputX').value = "";
   document.getElementById('details').innerHTML = "";
+  var base_address = window.location.href.toString();
+  base_address = base_address.slice(0, base_address.indexOf("?"));
+  window.history.replaceState(null, null, base_address)
 }
 
 function updateGraph(){
@@ -418,3 +427,102 @@ function updateGraph(){
   }
   // zoomButton.update();
 }
+/*
+*   We want methods here to load page with the same parametersif
+*   one user copy and pastes the url to another user.
+*
+*/
+
+function AddtoURI(params){
+  // var startOf = false;
+  var oldComponent, uriComponent;
+  var startIndex = 0;
+  var oldUrl = window.location.href.toString();
+  for (var urIndex = 0; urIndex < oldUrl.length; urIndex++){
+    // if (startOf = false){
+      if (oldUrl.charAt(urIndex) == "?"){
+        startIndex = urIndex;
+        break;
+      }
+    // }
+  }
+  if (startIndex != 0){
+    oldComponent = oldUrl.slice(startIndex);
+    uriComponent = oldComponent + encodeURIComponent(params);
+  } else {
+    uriComponent = "?" + encodeURIComponent(params);
+  }
+
+  // var current_URI = window.location.href;
+  window.history.replaceState(null, null, uriComponent)
+}
+
+function addXToURI(params){
+
+  var oldComponent, uriComponent;
+  var xStart, xEnd, containsX = false;
+  var oldUrl = window.location.href.toString();
+  if (!oldUrl.includes("?")){
+    return console.log("No function set")
+  }
+
+  oldComponent = oldUrl.slice(oldUrl.indexOf("?"))
+  xStart = oldComponent.indexOf("!");
+  xEnd = oldComponent.lastIndexOf("(");
+  if (xStart != -1){
+    if (xEnd > xStart){
+      var finalURI = oldComponent.slice(0, xStart) + encodeURIComponent(params) + oldComponent.slice(xEnd);
+    } else {
+      var finalURI = oldComponent.slice(0, xStart) + encodeURIComponent(params);
+    }
+
+  }else{
+    var finalURI = oldComponent + encodeURIComponent(params);
+  }
+  // var current_URI = window.location.href;
+  window.history.replaceState(null, null, finalURI)
+}
+
+function readURI(){
+
+  var encoded_URI = window.location.href;
+
+  if (encoded_URI.includes("?")){
+
+    var function_strings = [];
+    var x_coordinate = [];
+    var start_slice, end_slice;
+    encoded_URI = encoded_URI.slice(encoded_URI.indexOf("?") + 1);
+
+    encoded_URI = decodeURIComponent(encoded_URI);
+    var re  = /\(([^)]+)\)/g;
+
+    while (m = re.exec(encoded_URI)) {
+      function_strings.push(m[1]);
+    }
+
+    if(encoded_URI.includes("!")){
+      var index_coord = encoded_URI.indexOf("!"),
+            index_fx = encoded_URI.lastIndexOf("(");
+      if (index_coord < index_fx){
+          var x_for_input = encoded_URI.slice(index_coord + 1, index_fx);
+      } else {
+        var x_for_input = encoded_URI.slice(index_coord + 1);
+      }
+    }
+
+    for (var each_func = 0; each_func < function_strings.length; each_func++){
+      var expression = function_strings[each_func];
+      document.getElementById("funct").value = expression;
+      document.getElementById("buttn1").click();
+    }
+
+    if (x_for_input){
+      document.getElementById("inputX").value = x_for_input;
+      document.getElementById("find-Tan").click();
+      }
+
+  }
+
+}
+readURI();
