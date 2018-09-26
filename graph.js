@@ -179,7 +179,11 @@ function calculateTan(){
 
 function calculateURI() {
   const titles = window.functionArray.map( fn => fn.title );
-  let xValue = window.functionArray[0].cursor.x;
+  let xValue = null;
+  if ( window.functionArray.length > 0 ) {
+    xValue = window.functionArray[0].cursor.x;
+  } 
+
   return encodeURIComponent( JSON.stringify( { fns: titles, xValue } ) );
 }
 
