@@ -158,7 +158,6 @@ document.getElementById('find-Tan').addEventListener('click', calculateTan);
 function calculateTan(){
 
   var input = document.getElementById('inputX').value.replace('pi', Math.PI);
-  addXToURI("!" + input)
   var inX = parseFloat(input);
 
   if (inX != NaN){
@@ -175,9 +174,17 @@ function calculateTan(){
 
     }
     updateGraph();
-  }
+  } 
+}
 
+function calculateURI() {
+  const titles = window.functionArray.map( fn => fn.title );
+  let xValue = window.functionArray[0].cursor.x;
+  return encodeURIComponent( JSON.stringify( { fns: titles, xValue } ) );
+}
 
+function parseURI( uri ) {
+  return JSON.parse( decodeURIComponent( uri ) );
 }
 
 //
@@ -201,7 +208,6 @@ function calculate(event){
     // console.log(x, canvas.width);
     // console.log(x, xScale);
     var xScaled = mapVals(x, 0, canWidth, -xMax, xMax);
-    addXToURI("!" + xScaled.toFixed(2))
     //
     var xFix = xScaled.toFixed(2)
     for (var n = 0; n < numExpressions; n++){
@@ -281,7 +287,6 @@ function getFunction() {
   }
 
   if (alreadyExpressed == false){
-    AddtoURI('(' + expression + ')')
     var node = math.parse(finalexpression);
     var code = node.compile();
 
@@ -426,61 +431,6 @@ function updateGraph(){
     window.functionArray[x].update((x + 1));
   }
   // zoomButton.update();
-}
-/*
-*   We want methods here to load page with the same parametersif
-*   one user copy and pastes the url to another user.
-*
-*/
-
-function AddtoURI(params){
-  // var startOf = false;
-  var oldComponent, uriComponent;
-  var startIndex = 0;
-  var oldUrl = window.location.href.toString();
-  for (var urIndex = 0; urIndex < oldUrl.length; urIndex++){
-    // if (startOf = false){
-      if (oldUrl.charAt(urIndex) == "?"){
-        startIndex = urIndex;
-        break;
-      }
-    // }
-  }
-  if (startIndex != 0){
-    oldComponent = oldUrl.slice(startIndex);
-    uriComponent = oldComponent + encodeURIComponent(params);
-  } else {
-    uriComponent = "?" + encodeURIComponent(params);
-  }
-
-  // var current_URI = window.location.href;
-  window.history.replaceState(null, null, uriComponent)
-}
-
-function addXToURI(params){
-
-  var oldComponent, uriComponent;
-  var xStart, xEnd, containsX = false;
-  var oldUrl = window.location.href.toString();
-  if (!oldUrl.includes("?")){
-    return console.log("No function set")
-  }
-
-  oldComponent = oldUrl.slice(oldUrl.indexOf("?"))
-  xStart = oldComponent.indexOf("!");
-  xEnd = oldComponent.lastIndexOf("(");
-  if (xStart != -1){
-    if (xEnd > xStart){
-      var finalURI = oldComponent.slice(0, xStart) + encodeURIComponent(params) + oldComponent.slice(xEnd);
-    } else {
-      var finalURI = oldComponent.slice(0, xStart) + encodeURIComponent(params);
-    }
-
-  }else{
-    var finalURI = oldComponent + encodeURIComponent(params);
-  }
-  // var current_URI = window.location.href;
-  window.history.replaceState(null, null, finalURI)
 }
 
 function readURI(){
