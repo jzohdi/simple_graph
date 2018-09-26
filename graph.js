@@ -174,7 +174,7 @@ function calculateTan(){
 
     }
     updateGraph();
-  } 
+  }
 }
 
 function calculateURI() {
@@ -182,7 +182,7 @@ function calculateURI() {
   let xValue = null;
   if ( window.functionArray.length > 0 ) {
     xValue = window.functionArray[0].cursor.x;
-  } 
+  }
 
   return encodeURIComponent( JSON.stringify( { fns: titles, xValue } ) );
 }
@@ -436,47 +436,3 @@ function updateGraph(){
   }
   // zoomButton.update();
 }
-
-function readURI(){
-
-  var encoded_URI = window.location.href;
-
-  if (encoded_URI.includes("?")){
-
-    var function_strings = [];
-    var x_coordinate = [];
-    var start_slice, end_slice;
-    encoded_URI = encoded_URI.slice(encoded_URI.indexOf("?") + 1);
-
-    encoded_URI = decodeURIComponent(encoded_URI);
-    var re  = /\(([^)]+)\)/g;
-
-    while (m = re.exec(encoded_URI)) {
-      function_strings.push(m[1]);
-    }
-
-    if(encoded_URI.includes("!")){
-      var index_coord = encoded_URI.indexOf("!"),
-            index_fx = encoded_URI.lastIndexOf("(");
-      if (index_coord < index_fx){
-          var x_for_input = encoded_URI.slice(index_coord + 1, index_fx);
-      } else {
-        var x_for_input = encoded_URI.slice(index_coord + 1);
-      }
-    }
-
-    for (var each_func = 0; each_func < function_strings.length; each_func++){
-      var expression = function_strings[each_func];
-      document.getElementById("funct").value = expression;
-      document.getElementById("buttn1").click();
-    }
-
-    if (x_for_input){
-      document.getElementById("inputX").value = x_for_input;
-      document.getElementById("find-Tan").click();
-      }
-
-  }
-
-}
-readURI();
