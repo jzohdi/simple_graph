@@ -177,19 +177,6 @@ function calculateTan(){
   }
 }
 
-function calculateURI() {
-  const titles = window.functionArray.map( fn => fn.title );
-  let xValue = null;
-  if ( window.functionArray.length > 0 ) {
-    xValue = window.functionArray[0].cursor.x;
-  }
-
-  return encodeURIComponent( JSON.stringify( { fns: titles, xValue } ) );
-}
-
-function parseURI( uri ) {
-  return JSON.parse( decodeURIComponent( uri ) );
-}
 
 //
 // set the mouse coordinates and where the function object will draw its tangent and cursor circle
@@ -420,7 +407,8 @@ function clearGraph(){
   document.getElementById('inputX').value = "";
   document.getElementById('details').innerHTML = "";
   var base_address = window.location.href.toString();
-  base_address = base_address.slice(0, base_address.indexOf("?"));
+  let end_uri = base_address.indexOf("?");
+  if(end_uri > -1) base_address = base_address.slice(0, end_uri);
   window.history.replaceState(null, null, base_address)
 }
 
@@ -436,3 +424,47 @@ function updateGraph(){
   }
   // zoomButton.update();
 }
+/*
+* Functions for URI handlings and reading from the current graph objects
+*
+*
+*/
+document.getElementById("buttn1").addEventListener("click", replaceURI);
+
+function replaceURI(){
+  let uri_comp = calculateURI();
+  window.history.replaceState(null, null, "?" + uri_comp);
+}
+
+function calculateURI() {
+  const titles = window.functionArray.map( fn => fn.title );
+  let xValue = null;
+  if ( window.functionArray.length > 0 ) {
+    xValue = window.functionArray[0].cursor.x;
+  }
+
+  return encodeURIComponent( JSON.stringify( { fns: titles, xValue } ) );
+}
+
+function parseURI( uri ) {
+  return JSON.parse( decodeURIComponent( uri ) );
+}
+
+function readURI(){
+  let address = window.location.href;
+  let uri_index = address.indexOf( "?" );
+  if ( uri_index > -1 ){
+    let funcElement = document.getElementById("funct");
+    let goButton = document.getElementById("buttn1")
+
+    address = address.slice( uri_index + 1 );
+    let components = parseURI( address );
+    components.fns.forEach(function(el){
+      funcElement.value = el;
+      goButton.click();
+    });
+    document.getElementById("inputX").value = components.xValue;
+    document.getElementById("find-Tan").click();
+  }
+}
+readURI();
