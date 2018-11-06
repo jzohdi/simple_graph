@@ -1,43 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=yes" />
 
-    <link rel = 'stylesheet' href = 'styles.css' type='text/css'>
-    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
-    <script src="https://unpkg.com/mathjs@5.1.1/dist/math.min.js"></script>
-    <!-- <script src="algebra.min.js"></script> -->
-    <script src="https://code.jquery.com/jquery.js"></script>
-    <title>Graphing</title>
-    <style id='styles' style='display: none'></style>
-  </head>
-  <body>
-    <div class = 'container-fluid'>
-      <input type="text" class='padding' id="funct" name="funct" placeholder="ex. (x^2 - 1)/x">
-      <button id='buttn1' onclick="getFunction()" class="button button2">Go</button>
-      <button id='buttn' onclick="clearGraph()"class="button button3">Clear</button>
-      <div style = 'text-align: center;' id='input-box' class="flex">
-        <input type="text" class="flex-child" id="inputX" placeholder='input value for x from -10 to 10'>
-        <input type="button" class="flex-child button button4" id="find-Tan"  value="Input x Value">
+<head>
+  <meta charset="utf-8">
+  <!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit=yes" />
 
-      </div>
+  <link rel='stylesheet' href='styles.css' type='text/css'>
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <script src="https://unpkg.com/mathjs@5.1.1/dist/math.min.js"></script>
+  <!-- <script src="algebra.min.js"></script> -->
+  <script src="https://code.jquery.com/jquery.js"></script>
+  <title>Graphing</title>
+  <style id='styles' style='display: none'></style>
+</head>
 
-      <p id='details'></p>
+<body>
+  <div class='container-fluid'>
+    <input type="text" class='padding' id="funct" name="funct" placeholder="ex. (x^2 - 1)/x">
+    <button id='buttn1' onclick="getFunction()" class="button button2">Go</button>
+    <button id='buttn' onclick="clearGraph()" class="button button3">Clear</button>
+    <div style='text-align: center;' id='input-box' class="flex">
+      <input type="text" class="flex-child" id="inputX" placeholder='input value for x from -10 to 10'>
+      <input type="button" class="flex-child button button4" id="find-Tan" value="Input x Value">
+
     </div>
-    <!-- <div class='container'>
+
+    <p id='details'></p>
+  </div>
+  <!-- <div class='container'>
     <div id = 'details'></div></div> -->
-    <!-- onmousemove="calculate()" -->
-    <ul id='zoom'>
-      <li><input type="button" id='zoom-in'value="+"></li>
-      <li><input type="button" id='zoom-out'value="-"></li>
-    </ul>
-    <canvas id='map-canvas'></canvas>
-    <p style='font-family: "Verdana"; margin-bottom: 20px;'><b>Leave a suggestion: </b><a href="https://github.com/jzohdi/simple_graph/issues/new">New Github Issue</a></p>
-    <p></p>
-  </body>
-  <footer>
-    <script src='graph.js'></script>
-    <!-- <script src='zoom.js'></script> -->
+  <!-- onmousemove="calculate()" -->
+  <!-- <ul id='zoom'>
+    <li><input type="button" id='zoom-in' value="+"></li>
+    <li><input type="button" id='zoom-out' value="-"></li>
+  </ul> -->
+  <canvas onmouseleave='replaceURI()' id='map-canvas'></canvas>
+  <p style='font-family: "Verdana"; margin-bottom: 20px;'><b>Leave a suggestion: </b><a href="https://github.com/jzohdi/simple_graph/issues/new">New
+      Github Issue</a></p>
+  <p></p>
+</body>
+<footer>
+  <script src='graph.js'></script>
+  <!-- <script src='zoom.js'></script> -->
+
 </html>
