@@ -1,93 +1,169 @@
-var canvas = document.getElementById("map-canvas");
+const initSettings = canvas => {
+  // get a square for the canvas window
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight - 116;
+  const boxSide = Math.min(screenWidth, screenHeight);
 
-// get a square for the canvas window
-var screenWidth = window.innerWidth;
-var screenHeight = window.innerHeight - 116;
-var boxSide = Math.min(screenWidth, screenHeight);
-// console.log(boxSide);
-// if height is shorter and width, center the graph box
-if (screenWidth > screenHeight) {
-  var diff = screenWidth - screenHeight;
-  var offset = parseInt(diff / 2);
+  // if height is shorter and width, center the graph box
+  if (screenWidth > screenHeight) {
+    const diff = screenWidth - screenHeight;
+    const offset = parseInt(diff / 2);
+
+    document
+      .getElementById("styles")
+      .append(
+        "#map-canvas {transform: translate(" +
+          offset.toString() +
+          "px, 0);} #details { margin-left: " +
+          offset.toString() +
+          "px;}"
+      );
+  } else {
+    const offset = 0;
+  }
+
+  canvas.width = boxSide;
+  canvas.height = boxSide;
 
   document
     .getElementById("styles")
     .append(
-      "#map-canvas {transform: translate(" +
+      "#details { width: " + (boxSide - 6).toString() + "px; display: block; }"
+    );
+  document
+    .getElementById("styles")
+    .append(
+      ".flex { margin-left: " +
         offset.toString() +
-        "px, 0);} #details { margin-left: " +
-        offset.toString() +
+        "px; width: " +
+        boxSide.toString() +
         "px;}"
     );
-} else {
-  var offset = 0;
+
+  const canWidth = canvas.width;
+  const canvasoffsetTop = $("#map-canvas").offset().top;
+  document
+    .getElementById("styles")
+    .append(
+      "#zoom {transform: translate(" +
+        (canWidth + offset - 30).toString() +
+        "px, " +
+        0 +
+        "px);}"
+    );
+  // use for calculating the the values of the epxressions, from -xScale to +xScales
+  // init canvas background
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "black";
+
+  ctx.fillRect(0, 0, canWidth, canvas.height);
+
+  // set fill to white for the graph lines
+  ctx.fillStyle = "white";
+  return ctx;
 }
 
-canvas.width = boxSide;
-canvas.height = boxSide;
+class App {
+  constructor() {
+    this.canvas = document.getElementById("map-canvas");
+    this.ctx = initSettings(this.canvas);
+    this.device = 
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      ) ? "mobile": "desk";
+    if (this.device == "mobile") {
+      document.getElementById("styles").append("#details { font-sixe: 14px }");
+    }      
+    this.xScale = canWidth / 2;
+    this.xMax = 10;
+    this.xMin = -10;
+    this.pOff = canWidth / 2;
+    this.resolution = 0.005;
+    this.functionArray = [];
+  }
+  // maping of pixels to axis
+  mapVals(num, in_min, in_max, out_min, out_max) {
+    return ((num - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
+  }
+  functionAlreadyExists(newExpression) {
+    const findExpression = this.functionArray.filter(expression => {
+       return expression == newExpression;
+    })
+    return findExpression.length > 0;
+  }
+  getExpressionValues(code) {
+    let coords = []
+    // resolution is the resolution for the calculated y values
+    for (const x = xMin; x <= xMax; x = x + resolution) {
 
-document
-  .getElementById("styles")
-  .append(
-    "#details { width: " + (boxSide - 6).toString() + "px; display: block; }"
-  );
-document
-  .getElementById("styles")
-  .append(
-    ".flex { margin-left: " +
-      offset.toString() +
-      "px; width: " +
-      boxSide.toString() +
-      "px;}"
-  );
+      const result = code.eval({ x: x });
+      const canvasX = mapVals(x, xMin, xMax, 0, canWidth);
+      const canvasY = mapVals(result, xMin, xMax, canvas.height, 0);
 
-var canWidth = canvas.width;
-var canvasoffsetTop = $("#map-canvas").offset().top;
-document
-  .getElementById("styles")
-  .append(
-    "#zoom {transform: translate(" +
-      (canWidth + offset - 30).toString() +
-      "px, " +
-      0 +
-      "px);}"
-  );
-var pOff = canWidth / 2;
+      coords.push([
+        parseFloat(canvasX).toFixed(4),
+        parseFloat(canvasY).toFixed(4)
+      ]);
+    }
+    return coords;
+  }
+ /*
+  * getFunction is called when the user clicks on the Go button,
+  * first changing it to all lower case then removing ln and replacing with
+  * log(x) based e since this is the equivalent function,
+  * then checking to see if the user has already entered this function previously
+  * if not then a new object is created that holds the function and associated
+  * methods
+  */
+  getFunction() {
+    const expression = document.getElementById("funct").value.toLowerCase();
+    if (expression == "") {
+      console.log("empty function field");
+      return;
+    }
+    // replace('ln(x)', 'log(x, 2.71828182846)')
+    const finalexpression = scrubln(expression);
+    // console.log(finalexpression, expression);
 
-var device;
+    if (this.functionAlreadyExists(expression)) {
+      const node = math.parse(finalexpression);
+      const code = node.compile();
 
-if (
-  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    navigator.userAgent
-  )
-) {
-  device = "mobile";
-} else {
-  device = "desk";
+      const coords = this.getExpressionValues(code);
+      this.functionArray.push(new FunctionObject(
+        expression,
+        finalexpression,
+        coords,
+        code,
+        this
+      ));
+      this.addFunctionDetailsDiv();
+      this.drawFunctionValuesToGraph(coords)
+    }
+  }
+  drawFunctionValuesToGraph(coords){
+    for (const j = 0; j < coords.length; j++) {
+      // pOff is the amount you need to add since the canvas top left is 0,0
+      const px = coords[j][0];
+      const py = coords[j][1];
+      ctx.fillRect(px, py, 1, 1);
+    }
+  }
+  addFunctionDetailsDiv(){
+    const len = this.functionArray.length;
+    // '<div id="' + len.toString() + '"></div>'
+    const newDiv = document.createElement("p");
+    newDiv.setAttribute("id", len.toString());
+    if (device == "mobile") {
+      newDiv.setAttribute("style", "height:" + (18 * 3).toString() + "px;");
+    } else {
+      newDiv.setAttribute("style", "height:" + (18 * 3).toString() + "px;");
+    }
+    document.getElementById("details").appendChild(newDiv);
+  }
+
 }
-if (device == "mobile") {
-  document.getElementById("styles").append("#details { font-sixe: 14px }");
-}
-// use for calculating the the values of the epxressions, from -xScale to +xScales
-var xScale = canWidth / 2;
-var xMax = 10;
-var xMin = -10;
-// init canvas background
-var ctx = canvas.getContext("2d");
-
-ctx.fillStyle = "black";
-
-ctx.fillRect(0, 0, canWidth, canvas.height);
-
-// set fill to white for the graph lines
-ctx.fillStyle = "white";
-
-// maping of pixels to axis
-function mapVals(num, in_min, in_max, out_min, out_max) {
-  return ((num - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
-}
-
-var resolution = 0.005;
 /*
 // each graph input saved as an object, so then can call methods on the separate graphs.
 * the function object calculates its own tangent line, the canvas coordinates
@@ -95,32 +171,35 @@ var resolution = 0.005;
 * is zoomed in or out.
 *
 */
-function FunctionObject(title, string, points, express) {
-  this.title = title;
-  this.coordinates = JSON.parse(JSON.stringify(points));
+class FunctionObject {
+  constructor(title, string, points, express, app) {
+    this.app = app;
+    this.title = title;
+    this.coordinates = JSON.parse(JSON.stringify(points));
 
-  this.express = express;
-  this.cursor = {
-    x: 0,
-    y: 0
-  };
-  this.mouse = [];
-  this.intersections = [];
-  this.canvasIntersects = [];
-  this.tangent = "";
-  this.slope = math.derivative(string, "x");
+    this.express = express;
+    this.cursor = {
+      x: 0,
+      y: 0
+    };
+    this.mouse = [];
+    this.intersections = [];
+    this.canvasIntersects = [];
+    this.tangent = "";
+    this.slope = math.derivative(string, "x");
+  }
 
-  this.update = function(num) {
-    var y = 0;
-    for (var x = 0; x < this.coordinates.length; x++) {
-      var px = this.coordinates[x][0];
-      var py = this.coordinates[x][1];
+  update(num) {
+    const y = 0;
+    for (const x = 0; x < this.coordinates.length; x++) {
+      const px = this.coordinates[x][0];
+      const py = this.coordinates[x][1];
       ctx.fillRect(px, py, 1, 1);
     }
 
     ctx.beginPath();
     ctx.strokeStyle = "white";
-    for (var x = 0; x < window.functionArray.length; x++) {
+    for (const x = 0; x < window.functionArray.length; x++) {
       if (window.functionArray[x].title !== this.title) {
         if (
           Math.abs(
@@ -144,7 +223,7 @@ function FunctionObject(title, string, points, express) {
     ctx.arc(this.mouse[0], this.mouse[1], 5, 0, 2 * Math.PI);
     ctx.stroke();
 
-    var text =
+    const text =
       "  <b>" +
       this.title +
       "</b> --> x: " +
@@ -153,11 +232,11 @@ function FunctionObject(title, string, points, express) {
       parseFloat(this.cursor["y"]).toFixed(4) +
       ";";
 
-    var a = this.cursor.x;
+    const a = this.cursor.x;
 
     try {
-      var m = this.slope.eval({ x: a });
-      var expr = math.simplify(
+      const m = this.slope.eval({ x: a });
+      const expr = math.simplify(
         this.express.eval({ x: a }).toFixed(5) +
           "+" +
           parseFloat(m).toFixed(5) +
@@ -166,15 +245,15 @@ function FunctionObject(title, string, points, express) {
           ")"
       );
 
-      // var tanline = [];
+      // const tanline = [];
       if (expr.toString().includes("i")) {
         text += "<b> Tangent Line: </b>x coordinate out of domain.";
       } else {
-        for (var x = xMin; x <= xMax; x = x + xMax / 10) {
-          for (var y = x; y <= x + 0.1; y = y + resolution) {
-            var scaleX = mapVals(y, xMin, xMax, 0, canWidth);
-            var yval = expr.eval({ x: y });
-            var scaleY = mapVals(yval, xMin, xMax, canvas.height, 0);
+        for (const x = xMin; x <= xMax; x = x + xMax / 10) {
+          for (const y = x; y <= x + 0.1; y = y + resolution) {
+            const scaleX = mapVals(y, xMin, xMax, 0, canWidth);
+            const yval = expr.eval({ x: y });
+            const scaleY = mapVals(yval, xMin, xMax, canvas.height, 0);
             ctx.fillRect(scaleX, scaleY, 1, 1);
           }
         }
@@ -189,9 +268,9 @@ function FunctionObject(title, string, points, express) {
   };
 }
 
-var functionArray = new Array();
+const functionArray = new Array();
 
-var canvasoffset = $("#map-canvas").offset().left;
+const canvasoffset = $("#map-canvas").offset().left;
 
 // event listner to look at where on each graph the mouse X is
 if (device == "mobile") {
@@ -205,21 +284,21 @@ if (device == "mobile") {
 document.getElementById("find-Tan").addEventListener("click", calculateTan);
 
 /*
-*
-* calculateTan is called upon input x, the line itself
-* is draw by the function object within its update method
-*
-*/
+ *
+ * calculateTan is called upon input x, the line itself
+ * is draw by the function object within its update method
+ *
+ */
 function calculateTan() {
-  var input = document.getElementById("inputX").value.replace("pi", Math.PI);
-  var inX = parseFloat(input);
+  const input = document.getElementById("inputX").value.replace("pi", Math.PI);
+  const inX = parseFloat(input);
 
   if (inX != NaN) {
-    var xOnCanvas = mapVals(inX, xMin, xMax, 0, canWidth);
-    for (var i = 0; i < window.functionArray.length; i++) {
-      var express = window.functionArray[i].express;
-      var yFromFunc = express.eval({ x: inX });
-      var yOnCanvas = mapVals(yFromFunc, xMin, xMax, canvas.height, 0);
+    const xOnCanvas = mapVals(inX, xMin, xMax, 0, canWidth);
+    for (const i = 0; i < window.functionArray.length; i++) {
+      const express = window.functionArray[i].express;
+      const yFromFunc = express.eval({ x: inX });
+      const yOnCanvas = mapVals(yFromFunc, xMin, xMax, canvas.height, 0);
 
       window.functionArray[i].cursor["x"] = inX;
       window.functionArray[i].cursor["y"] = yFromFunc;
@@ -236,26 +315,26 @@ function calculateTan() {
 //
 //
 function calculate(event) {
-  var numExpressions = window.functionArray.length;
+  const numExpressions = window.functionArray.length;
   // console.log(event.clientX - window.canvasoffset)
 
   if (numExpressions > 0) {
     if (device == "mobile") {
-      var x = event.touches[0].clientX;
+      const x = event.touches[0].clientX;
     } else {
-      var x = event.clientX - window.canvasoffset;
+      const x = event.clientX - window.canvasoffset;
     }
 
     // console.log(x, canvas.width);
     // console.log(x, xScale);
-    var xScaled = mapVals(x, 0, canWidth, xMin, xMax);
+    const xScaled = mapVals(x, 0, canWidth, xMin, xMax);
     //
-    var xFix = xScaled.toFixed(2);
-    for (var n = 0; n < numExpressions; n++) {
-      var fx = window.functionArray[n].express;
-      var yval = fx.eval({ x: xFix });
+    const xFix = xScaled.toFixed(2);
+    for (const n = 0; n < numExpressions; n++) {
+      const fx = window.functionArray[n].express;
+      const yval = fx.eval({ x: xFix });
 
-      var yCursor = mapVals(yval, xMin, xMax, canvas.height, 0);
+      const yCursor = mapVals(yval, xMin, xMax, canvas.height, 0);
       // console.log(yval)
       window.functionArray[n].mouse = [x, yCursor];
       window.functionArray[n].cursor["x"] = xFix;
@@ -272,12 +351,12 @@ function calculate(event) {
 
 function scrubln(ex) {
   if (ex.includes("ln(")) {
-    var start = false;
-    var middle = [];
-    var exBefore;
-    var exAfter;
+    const start = false;
+    const middle = [];
+    const exBefore;
+    const exAfter;
     let countParens = 0;
-    for (var i = 0; i < ex.length; i++) {
+    for (const i = 0; i < ex.length; i++) {
       if (ex.charAt(i) == "l" && ex.charAt(i + 1) == "n") {
         exBefore = ex.slice(0, i);
         middle.push(i + 3);
@@ -311,108 +390,32 @@ function scrubln(ex) {
 }
 
 /*
-*
-* getFunction is called when the user clicks on the Go button,
-* first changing it to all lower case then removing ln and replacing with
-* log(x) based e since this is the equivalent function,
-* then checking to see if the user has already entered this function previously
-* if not then a new object is created that holds the function and associated
-* methods
-*
-*/
-function getFunction() {
-  var expression = document.getElementById("funct").value.toLowerCase();
-  if (expression == "") {
-    return console.log("empty function field");
-  }
-  // replace('ln(x)', 'log(x, 2.71828182846)')
-  var finalexpression = scrubln(expression);
-  // console.log(finalexpression, expression);
-  var alreadyExpressed = false;
-
-  for (var t = 0; t < window.functionArray.length; t++) {
-    if (window.functionArray[t].title == expression) {
-      alreadyExpressed = true;
-    }
-  }
-
-  if (alreadyExpressed == false) {
-    var node = math.parse(finalexpression);
-    var code = node.compile();
-
-    var coords = [];
-    // resolution is the resolution for the calculated y values
-    for (var x = xMin; x <= xMax; x = x + resolution) {
-      // var x = j
-
-      var result = code.eval({ x: x });
-
-      var canvasX = mapVals(x, xMin, xMax, 0, canWidth);
-      var canvasY = mapVals(result, xMin, xMax, canvas.height, 0);
-
-      coords.push([
-        parseFloat(canvasX).toFixed(4),
-        parseFloat(canvasY).toFixed(4)
-      ]);
-    }
-
-    var newExpressionObject = new FunctionObject(
-      expression,
-      finalexpression,
-      coords,
-      code
-    );
-
-    window.functionArray.push(newExpressionObject);
-
-    var len = window.functionArray.length;
-    // '<div id="' + len.toString() + '"></div>'
-    var newDiv = document.createElement("p");
-    newDiv.setAttribute("id", len.toString());
-    if (device == "mobile") {
-      newDiv.setAttribute("style", "height:" + (18 * 3).toString() + "px;");
-    } else {
-      newDiv.setAttribute("style", "height:" + (18 * 3).toString() + "px;");
-    }
-    document.getElementById("details").appendChild(newDiv);
-
-    for (var j = 0; j < coords.length; j++) {
-      // pOff is the amount you need to add since the canvas top left is 0,0
-      var px = coords[j][0];
-      var py = coords[j][1];
-
-      ctx.fillRect(px, py, 1, 1);
-    }
-  }
-}
-
-/*
-*
-* This function is called when the zoom in or zoom out buttons are clicked
-* the function iterates through each of the saved function's canvas coordinates
-* and recalculates where the points along the graph should be relative to the
-* new frame. the page starts at from -10 to 10
-*
-*/
+ *
+ * This function is called when the zoom in or zoom out buttons are clicked
+ * the function iterates through each of the saved function's canvas coordinates
+ * and recalculates where the points along the graph should be relative to the
+ * new frame. the page starts at from -10 to 10
+ *
+ */
 document
   .getElementById("map-canvas")
   .addEventListener("onmouseleave", function() {
     console.log("yes");
   });
 function setNewCoords(num) {
-  var newMax = xMax + num;
-  var newMin = xMin + num;
-  for (var j = 0; j < window.functionArray.length; j++) {
-    var newCoords = [];
-    var funct = window.functionArray[j];
-    for (var x = newMin; x <= newMax; x = x + resolution) {
-      // var x = j
+  const newMax = xMax + num;
+  const newMin = xMin + num;
+  for (const j = 0; j < window.functionArray.length; j++) {
+    const newCoords = [];
+    const funct = window.functionArray[j];
+    for (const x = newMin; x <= newMax; x = x + resolution) {
+      // const x = j
 
-      var result = funct.express.eval({ x: x });
+      const result = funct.express.eval({ x: x });
 
       // map the x and y of the function to the dimensions of the canvas
-      var canvasX = mapVals(x, newMin, newMax, 0, canWidth);
-      var canvasY = mapVals(result, newMin, newMax, canvas.height, 0);
+      const canvasX = mapVals(x, newMin, newMax, 0, canWidth);
+      const canvasY = mapVals(result, newMin, newMax, canvas.height, 0);
       // console.log(canvasX, canvasY)
       newCoords.push([
         parseFloat(canvasX).toFixed(4),
@@ -440,32 +443,32 @@ function setNewCoords(num) {
 // });
 
 /*
-*
-* Below are the are the reused methods to draw the axis,
-* clear functions
-* and while updateGraph is called, update will be called
-* on each function, giving an effect of animation
-*
-*/
+ *
+ * Below are the are the reused methods to draw the axis,
+ * clear functions
+ * and while updateGraph is called, update will be called
+ * on each function, giving an effect of animation
+ *
+ */
 function setAxis() {
-  var yAxis = [],
+  const yAxis = [],
     xAxis = [];
-  var ymid = canWidth / 2,
+  const ymid = canWidth / 2,
     xmid = canvas.height / 2;
-  var ymarkers = canvas.height / 20,
+  const ymarkers = canvas.height / 20,
     xmarkers = canWidth / 20;
 
-  for (var n = 0; n <= canvas.height; n = n + ymarkers) {
+  for (const n = 0; n <= canvas.height; n = n + ymarkers) {
     yAxis.push(parseFloat(n.toFixed(2)));
   }
-  for (var n = 0; n <= canWidth; n = n + xmarkers) {
+  for (const n = 0; n <= canWidth; n = n + xmarkers) {
     xAxis.push(parseFloat(n.toFixed(2)));
   }
   // console.log(yAxis, xAxis)
-  for (var i = 0; i < yAxis.length; i++) {
+  for (const i = 0; i < yAxis.length; i++) {
     ctx.fillRect(ymid, yAxis[i], 1, 1);
   }
-  for (var i = 0; i < xAxis.length; i++) {
+  for (const i = 0; i < xAxis.length; i++) {
     ctx.fillRect(xAxis[i], xmid, 1, 1);
   }
 }
@@ -484,7 +487,7 @@ function clearGraph() {
 
   document.getElementById("inputX").value = "";
   document.getElementById("details").innerHTML = "";
-  var base_address = window.location.href.toString();
+  const base_address = window.location.href.toString();
   let end_uri = base_address.indexOf("?");
   if (end_uri > -1) base_address = base_address.slice(0, end_uri);
   window.history.replaceState(null, null, base_address);
@@ -496,16 +499,16 @@ function updateGraph() {
   ctx.fillStyle = "white";
   setAxis();
 
-  for (var x = 0; x < window.functionArray.length; x++) {
+  for (const x = 0; x < window.functionArray.length; x++) {
     window.functionArray[x].update(x + 1);
   }
   // zoomButton.update();
 }
 /*
-* Functions for URI handlings and reading from the current graph objects
-*
-*
-*/
+ * Functions for URI handlings and reading from the current graph objects
+ *
+ *
+ */
 
 document.getElementById("buttn1").addEventListener("click", replaceURI);
 
@@ -528,7 +531,7 @@ function parseURI(uri) {
   return JSON.parse(decodeURIComponent(uri));
 }
 
-function readURI() {
+const readURI = () => {
   let address = window.location.href;
   let uri_index = address.indexOf("?");
   if (uri_index > -1) {
