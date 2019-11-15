@@ -3,12 +3,10 @@ const initSettings = canvas => {
   const screenWidth = window.innerWidth;
   const screenHeight = window.innerHeight - 116;
   const boxSide = Math.min(screenWidth, screenHeight);
-
+  let offset = 0;
   // if height is shorter and width, center the graph box
   if (screenWidth > screenHeight) {
     const diff = screenWidth - screenHeight;
-    const offset = parseInt(diff / 2);
-
     document
       .getElementById("styles")
       .append(
@@ -18,10 +16,8 @@ const initSettings = canvas => {
           offset.toString() +
           "px;}"
       );
-  } else {
-    const offset = 0;
+      offset = parseInt(diff / 2);
   }
-
   canvas.width = boxSide;
   canvas.height = boxSide;
 
@@ -39,14 +35,11 @@ const initSettings = canvas => {
         boxSide.toString() +
         "px;}"
     );
-
-  const canWidth = canvas.width;
-  const canvasoffsetTop = $("#map-canvas").offset().top;
   document
     .getElementById("styles")
     .append(
       "#zoom {transform: translate(" +
-        (canWidth + offset - 30).toString() +
+        (canvas.width + offset - 30).toString() +
         "px, " +
         0 +
         "px);}"
@@ -54,10 +47,8 @@ const initSettings = canvas => {
   // use for calculating the the values of the epxressions, from -xScale to +xScales
   // init canvas background
   const ctx = canvas.getContext("2d");
-
   ctx.fillStyle = "black";
-
-  ctx.fillRect(0, 0, canWidth, canvas.height);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // set fill to white for the graph lines
   ctx.fillStyle = "white";
@@ -67,6 +58,7 @@ const initSettings = canvas => {
 class App {
   constructor() {
     this.canvas = document.getElementById("map-canvas");
+    this.canvasoffset = $("#map-canvas").offset().left;
     this.ctx = initSettings(this.canvas);
     this.device = 
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -86,12 +78,14 @@ class App {
   mapVals(num, in_min, in_max, out_min, out_max) {
     return ((num - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min;
   }
+
   functionAlreadyExists(newExpression) {
     const findExpression = this.functionArray.filter(expression => {
        return expression == newExpression;
     })
     return findExpression.length > 0;
   }
+
   getExpressionValues(code) {
     let coords = []
     // resolution is the resolution for the calculated y values
@@ -150,6 +144,7 @@ class App {
       ctx.fillRect(px, py, 1, 1);
     }
   }
+  
   addFunctionDetailsDiv(){
     const len = this.functionArray.length;
     // '<div id="' + len.toString() + '"></div>'
@@ -173,7 +168,7 @@ class App {
 */
 class FunctionObject {
   constructor(title, string, points, express, app) {
-    this.app = app;
+    this.parentApp = app;
     this.title = title;
     this.coordinates = JSON.parse(JSON.stringify(points));
 
@@ -188,52 +183,40 @@ class FunctionObject {
     this.tangent = "";
     this.slope = math.derivative(string, "x");
   }
-
-  update(num) {
-    const y = 0;
-    for (const x = 0; x < this.coordinates.length; x++) {
-      const px = this.coordinates[x][0];
-      const py = this.coordinates[x][1];
-      ctx.fillRect(px, py, 1, 1);
-    }
-
-    ctx.beginPath();
-    ctx.strokeStyle = "white";
-    for (const x = 0; x < window.functionArray.length; x++) {
-      if (window.functionArray[x].title !== this.title) {
-        if (
-          Math.abs(
-            parseFloat(window.functionArray[x].cursor["y"]) -
-              parseFloat(this.cursor["y"])
-          ) <= 0.04
-        ) {
-          ctx.strokeStyle = "red";
-          ctx.fillStyle = "red";
-          ctx.font = "20px Arial";
-          ctx.fillText(
-            "X : " + this.cursor["x"].toString(),
-            this.mouse[0] + 20,
-            this.mouse[y] - 20
-          );
-          ctx.fillStyle = "white";
-        }
+  drawCoordinateValues(coordinateArray) {
+    const parentApp = this.parentApp;
+    coordinateArray.forEach(coordinate => {
+      parentApp.ctx.fillRect(coordinate[0], coordinate[1], 1, 1);
+    })
+  }
+  drawYValueIndicator() {
+    const app = this;
+    const parentApp = this.parentApp;
+    parentApp.ctx.beginPath();
+    parentApp.ctx.strokeStyle = "white";
+ 
+    this.parentApp.functionArray.forEach(expression => {
+      if(expression.title !== app.title && app.yValuesAreWithinThreshold(expression.cursor["y"])){
+        parentApp.ctx.strokeStyle = "red";
+        parentApp.ctx.fillStyle = "red";
+        parentApp.ctx.font = "20px Arial";
+        parentApp.ctx.fillText(
+          "X : " + this.cursor["x"].toString(),
+          this.mouse[0] + 20,
+          this.mouse[y] - 20
+        );
+        parentApp.ctx.fillStyle = "white";
       }
-    }
-    ctx.lineWidth = 2;
-    ctx.arc(this.mouse[0], this.mouse[1], 5, 0, 2 * Math.PI);
-    ctx.stroke();
-
-    const text =
-      "  <b>" +
-      this.title +
-      "</b> --> x: " +
-      this.cursor["x"].toString() +
-      " y: " +
-      parseFloat(this.cursor["y"]).toFixed(4) +
-      ";";
-
+    })
+    parentApp.ctx.lineWidth = 2;
+    parentApp.ctx.arc(this.mouse[0], this.mouse[1], 5, 0, 2 * Math.PI);
+    parentApp.ctx.stroke();
+  }
+  yValuesAreWithinThreshold(otherExpressionYValue){
+    return Math.abs(parseFloat(otherExpressionYValue) - parseFloat(this.cursor["y"])) <= 0.04
+  }
+  takeDerivative(){
     const a = this.cursor.x;
-
     try {
       const m = this.slope.eval({ x: a });
       const expr = math.simplify(
@@ -244,33 +227,41 @@ class FunctionObject {
           parseFloat(a).toFixed(4) +
           ")"
       );
-
-      // const tanline = [];
-      if (expr.toString().includes("i")) {
-        text += "<b> Tangent Line: </b>x coordinate out of domain.";
-      } else {
-        for (const x = xMin; x <= xMax; x = x + xMax / 10) {
-          for (const y = x; y <= x + 0.1; y = y + resolution) {
-            const scaleX = mapVals(y, xMin, xMax, 0, canWidth);
-            const yval = expr.eval({ x: y });
-            const scaleY = mapVals(yval, xMin, xMax, canvas.height, 0);
-            ctx.fillRect(scaleX, scaleY, 1, 1);
-          }
-        }
-        text += "<b> Tangent Line: </b>" + expr.toString();
-      }
-    } catch (err) {
-      text += "<b> Tangent Line: </b>x coordinate out of domain.";
+      return expr;
+    } catch(error){
+      return null;
     }
+  }
+  update(num) {
+    const y = 0;
+    this.drawCoordinateValues(this.coordinates);
+    this.drawYValueIndicator();
 
-    text += "<br><b>Derivative: </b> " + this.slope.toString();
-    document.getElementById(num.toString()).innerHTML = text;
+    const derivative = this.takeDerivative(); 
+    if (derivative == null || derivative.toString().includes("i")) {
+      this.writeFunctionDetails("<b> Tangent Line: </b>x coordinate out of domain.");
+      return;
+    }
+    this.drawTangentLine(derivative);   
+    this.writeFunctionDetails("<b> Tangent Line: </b>" + expr.toString(), num)
   };
+  drawTangentLine(derivative){
+    for (const x = this.parentApp.xMin; x <= this.parentApp.xMax; x = x + this.parentApp.xMax / 10) {
+      for (const y = x; y <= x + 0.1; y = y + this.parentApp.resolution) {
+        const scaleX = mapVals(y, this.parentApp.xMin, this.parentApp.xMax, 0, this.parentApp.canvas.width);
+        const yval = derivative.eval({ x: y });
+        const scaleY = mapVals(yval, this.parentApp.xMin, this.parentApp.xMax, canvas.height, 0);
+        ctx.fillRect(scaleX, scaleY, 1, 1);
+      }
+    }
+  }
+  writeFunctionDetails(tangentLineMessage, num){
+    const text =
+    `  <b>${this.title}</b> --> x: ${this.cursor["x"].toString()} y: ${parseFloat(this.cursor["y"]).toFixed(4)};` +
+    tangentLineMessage + "<br><b>Derivative: </b> " + this.slope.toString();
+    document.getElementById(num.toString()).innerHTML = text;
+  }
 }
-
-const functionArray = new Array();
-
-const canvasoffset = $("#map-canvas").offset().left;
 
 // event listner to look at where on each graph the mouse X is
 if (device == "mobile") {
