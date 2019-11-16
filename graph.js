@@ -94,7 +94,7 @@ class App {
     let coords = [];
     // resolution is the resolution for the calculated y values
     for (let x = this.xMin; x <= this.xMax; x = x + this.resolution) {
-      const result = code.eval({ x: x });
+      const result = code.evaluate({ x: x });
       const canvasX = this.mapVals(
         x,
         this.xMin,
@@ -221,7 +221,7 @@ class App {
   updateFunctionCursor(x, xValue) {
     this.functionArray.forEach(expression => {
       const fx = expression.express;
-      const yValue = fx.eval({ x: xValue });
+      const yValue = fx.evaluate({ x: xValue });
       const yCursor = this.mapVals(
         yValue,
         this.xMin,
@@ -448,9 +448,9 @@ class FunctionObject {
   takeDerivative() {
     const a = this.cursor.x;
     try {
-      const m = this.slope.eval({ x: a });
+      const m = this.slope.evaluate({ x: a });
       const expr = math.simplify(
-        this.express.eval({ x: a }).toFixed(5) +
+        this.express.evaluate({ x: a }).toFixed(5) +
           "+" +
           parseFloat(m).toFixed(5) +
           "(x - " +
@@ -487,7 +487,7 @@ class FunctionObject {
     for (let x = app.xMin; x <= app.xMax; x = x + app.xMax / 10) {
       for (let y = x; y <= x + 0.1; y = y + app.resolution) {
         const scaleX = app.mapVals(y, app.xMin, app.xMax, 0, app.canvas.width);
-        const yval = derivative.eval({ x: y });
+        const yval = derivative.evaluate({ x: y });
         const scaleY = app.mapVals(
           yval,
           app.xMin,
@@ -535,7 +535,7 @@ function setNewCoords(num) {
     for (let x = newMin; x <= newMax; x = x + resolution) {
       // const x = j
 
-      const result = funct.express.eval({ x: x });
+      const result = funct.express.evaluate({ x: x });
 
       // map the x and y of the function to the dimensions of the canvas
       const canvasX = mapVals(x, newMin, newMax, 0, canWidth);
